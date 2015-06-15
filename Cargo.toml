@@ -1,0 +1,8 @@
+[package]
+name = "rpaillier"
+version = "0.1.0"
+authors = ["Hendrik Kunert <qkunerd@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
+num = "0.1"
