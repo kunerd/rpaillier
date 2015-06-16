@@ -1,4 +1,3 @@
-// use core::ops::{ Mul, Rem };
 use core::ops::Mul;
 
 use num::traits::{ Zero, One, FromPrimitive, ToPrimitive };
@@ -43,7 +42,7 @@ impl ModPow<BigInt> for BigInt {
         table.push(BigInt::one());
 
         for i in 1..base {
-            let last = table.get(i-1).unwrap().clone();
+            let last = table.get_mut(i-1).unwrap().clone();
 
             table.push((last * self) % m);
         }
@@ -55,8 +54,8 @@ impl ModPow<BigInt> for BigInt {
                 r = &r * &r % m
             }
 
-            if (*i) != 0 {
-                r = r * table.get((*i)).unwrap() % m;
+            if *i != 0 {
+                r = &r * table.get(*i).unwrap() % m;
             }
         }
 
@@ -68,17 +67,18 @@ fn digits_of_n(e: &BigInt, b: usize) -> Vec<usize> {
     let mut digits = Vec::new();
 
     let mut n = (*e).clone();
-    let base = &BigInt::from_usize(b).unwrap();
+    let base = BigInt::from_usize(b).unwrap();
+
     while n > BigInt::zero() {
-        digits.push((&n % base).to_usize().unwrap());
-        n = &n / base;
+        digits.push((&n % &base).to_usize().unwrap());
+        n = &n / &base;
     }
 
-    return digits
+    digits
 }
 
 pub trait ModInverse<T> {
-    fn mod_inverse(&self, n: &BigInt) -> Option<BigInt>;
+    fn mod_inverse(&self, n: &T) -> Option<T>;
 }
 
 impl ModInverse<BigInt> for BigInt {
