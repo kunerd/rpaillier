@@ -91,7 +91,7 @@ impl ModInverse<BigInt> for BigInt {
 
         let mut iter = true;
 
-        while (v3 != BigInt::zero())
+        while v3 != BigInt::zero()
         {
             let q = &u3 / &v3;
             let t3 = u3 % &v3;
@@ -109,7 +109,7 @@ impl ModInverse<BigInt> for BigInt {
             return None;
         }
 
-        let inv = if (iter == false) {
+        let inv = if iter == false {
             n - u1
         } else {
             u1

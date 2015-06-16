@@ -1,4 +1,4 @@
-use num::bigint::{ BigInt, RandBigInt };
+use num::bigint::BigInt;
 use bigint_extensions::ModPow;
 use num::traits::One;
 
