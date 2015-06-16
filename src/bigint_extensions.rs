@@ -118,3 +118,44 @@ impl ModInverse<BigInt> for BigInt {
         Some(inv)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use num::bigint::{ BigInt, Sign, RandBigInt };
+    use rand::StdRng;
+
+    use test::Bencher;
+
+    #[bench]
+    fn bench_mod_pow(b: &mut Bencher) {
+        let mut rng = match StdRng::new() {
+            Ok(g) => g,
+            Err(e) => panic!("Failed to obtain OS RNG: {}", e)
+        };
+
+        let base = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
+        let m = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
+
+        b.iter(|| {
+            let exp = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
+            base.mod_pow(&exp, &m);
+        });
+    }
+
+
+    #[bench]
+    fn bench_mod_inverse(b: &mut Bencher) {
+        let mut rng = match StdRng::new() {
+            Ok(g) => g,
+            Err(e) => panic!("Failed to obtain OS RNG: {}", e)
+        };
+
+        let m = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(256));
+
+        b.iter(|| {
+            let a = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(256));
+            a.mod_inverse(&m);
+        });
+    }
+}
