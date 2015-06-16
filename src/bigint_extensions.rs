@@ -1,7 +1,7 @@
-use core::ops::{ Mul, Rem };
+// use core::ops::{ Mul, Rem };
+use core::ops::Mul;
 
-use num::traits::{ Zero, One };
-use num::integer::Integer;
+use num::traits::{ Zero, One, FromPrimitive, ToPrimitive };
 use num::bigint::{ BigInt, Sign };
 
 pub trait Two: Mul<Self, Output=Self> {
@@ -30,24 +30,51 @@ pub trait ModPow<T> {
     fn mod_pow(&self, exp: &T, m: &T) -> T;
 }
 
-impl ModPow<BigInt> for BigInt {
-    #[no_mangle]
-    fn mod_pow(&self, exp: &BigInt, m: &BigInt) -> BigInt {
-        let mut a = self.rem(m);
-        let mut b = (*exp).clone();
-        let mut p = BigInt::one();
+const TABLE_BASE: usize = 5;
 
-        while b > BigInt::zero() {
-             if b.is_odd() {
-                 p = p * &a;
-                 p = p % m;
-             }
-             b = b / BigInt::two();
-             a = (&a * &a) % m;
+impl ModPow<BigInt> for BigInt {
+
+    // Left-to-right k-ary exponentiation
+    fn mod_pow(&self, exp: &BigInt, m: &BigInt) -> BigInt {
+
+        let base = 2 << (TABLE_BASE - 1);
+
+        let mut table = Vec::with_capacity(base);
+        table.push(BigInt::one());
+
+        for i in 1..base {
+            let last = table.get(i-1).unwrap().clone();
+
+            table.push((last * self) % m);
         }
 
-        p
+        let mut r = BigInt::one();
+
+        for i in digits_of_n(exp, base).iter().rev() {
+            for _ in 0..TABLE_BASE {
+                r = &r * &r % m
+            }
+
+            if (*i) != 0 {
+                r = r * table.get((*i)).unwrap() % m;
+            }
+        }
+
+        r
     }
+}
+
+fn digits_of_n(e: &BigInt, b: usize) -> Vec<usize> {
+    let mut digits = Vec::new();
+
+    let mut n = (*e).clone();
+    let base = &BigInt::from_usize(b).unwrap();
+    while n > BigInt::zero() {
+        digits.push((&n % base).to_usize().unwrap());
+        n = &n / base;
+    }
+
+    return digits
 }
 
 pub trait ModInverse<T> {
@@ -90,9 +117,4 @@ impl ModInverse<BigInt> for BigInt {
 
         Some(inv)
     }
-}
-
-#[cfg(test)]
-mod tests {
-
 }

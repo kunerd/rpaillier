@@ -32,39 +32,26 @@ impl KeyPairBuilder {
     }
 
     pub fn finalize(&self) -> KeyPair {
+
         let mut sec_rng = match OsRng::new() {
             Ok(g) => g,
             Err(e) => panic!("Failed to obtain OS RNG: {}", e)
         };
 
-        println!("generate p and q ...");
-
         let p = &generate_possible_prime(&mut sec_rng, self.bits, self.certainty);
         let q = &generate_possible_prime(&mut sec_rng, self.bits, self.certainty);
-
-        println!("done!");
 
         let n = p * q;
         let n_squared = &n * &n;
 
-        // recommended bit size for p and q
-        // L= 1024, N= 160
-        // L= 2048, N= 224
-        // L= 2048, N= 256
-        // L= 3072, N= 256
         let p_minus_one = p - BigInt::one();
         let q_minus_one = q - BigInt::one();
 
-        println!("generate lambda");
-
         let lambda = Integer::lcm(&p_minus_one, &q_minus_one);
-
-        println!("generate g");
-        // let mut g = BigInt::two();
-        // let mut helper = calculate_l(&g.mod_pow(&lambda, &n_squared), &n);;
 
         let mut g;
         let mut helper;
+
         loop {
         // while {
             g = BigInt::from_biguint(Sign::Plus, sec_rng.gen_biguint(self.bits));
@@ -76,8 +63,6 @@ impl KeyPairBuilder {
             }
         }
 
-        println!("done!");
-
         let public_key =
             PublicKey {
                 bits: self.bits,
@@ -86,7 +71,6 @@ impl KeyPairBuilder {
                 g: g.clone()
             };
 
-        println!("create private key");
         let private_key = PrivateKey {
                 lambda: lambda,
                 denominator: helper.mod_inverse(&n).unwrap()
@@ -125,9 +109,9 @@ fn miller_rabin(n: &BigInt, k: u32) -> bool{
     let n_minus_one = n - BigInt::one();
 
     let mut r = 0;
-    let mut s = n - BigInt::one();
+    let mut s = (*n).clone() - BigInt::one();
 
-    while s.clone() % BigInt::two() == BigInt::zero() {
+    while &s % &BigInt::two() == BigInt::zero() {
        r += 1;
        s = s / BigInt::two();
     }

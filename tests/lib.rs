@@ -3,7 +3,7 @@ extern crate rpaillier;
 
 use num::bigint::BigInt;
 use num::traits::FromPrimitive;
-use rpaillier::bigint_extensions::{ Two, Three, ModInverse};
+use rpaillier::bigint_extensions::{ Two, Three, ModInverse, ModPow};
 
 use rpaillier::{ KeyPair, PublicKey, KeyPairBuilder };
 
@@ -19,6 +19,27 @@ fn test_bigint_three() {
     let a = BigInt::three();
     let e = BigInt::from_u8(3).unwrap();
     assert_eq!(e, a);
+}
+
+#[test]
+fn test_bigint_mod_pow() {
+    fn check(b: i64, e: i64, m: i64, r: i64) {
+        let big_b = BigInt::from_i64(b).unwrap();
+        let big_e = BigInt::from_i64(e).unwrap();
+        let big_m = BigInt::from_i64(m).unwrap();
+        let big_r = BigInt::from_i64(r).unwrap();
+
+        assert_eq!(big_b.mod_pow(&big_e, &big_m), big_r);
+    }
+
+    check(-2, 5, 33, -32);
+    check(-2, 5, 32, 0);
+    check(-1, 3, 10, -1);
+    check(-1, 4, 10, 1);
+    check(0, 2352, 21, 0);
+    check(1, 26, 21, 1);
+    check(2, 5, 33, 32);
+    check(2, 5, 32, 0);
 }
 
 #[test]
@@ -61,4 +82,24 @@ fn test_encrypt_decrypt() {
     let a = key_pair.decrypt(&c);
 
     assert_eq!(m, a);
+}
+
+#[test]
+fn test_homomorphic_properties() {
+    let kp = KeyPairBuilder::new().bits(128).finalize();
+
+    let pk = &kp.public_key;
+
+    let m1 = BigInt::from_u8(37).unwrap();
+    let m2 = BigInt::from_u8(37).unwrap();
+
+    let c1 = pk.encrypt(&m1);
+    let c2 = pk.encrypt(&m2);
+
+    let add = (c1 * c2) % &pk.n_squared;
+
+    let e = m1 + m2;
+    let a = kp.decrypt(&add);
+
+    assert_eq!(a, e);
 }
