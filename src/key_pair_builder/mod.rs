@@ -1,5 +1,5 @@
 use num::bigint::{ BigInt, RandBigInt, Sign };
-use num::traits::{ Zero, One };
+use num::traits::{ Zero, One, FromPrimitive };
 use num::integer::Integer;
 use rand::{ OsRng, StdRng };
 
@@ -89,11 +89,22 @@ fn calculate_l(u: &BigInt, n: &BigInt) -> BigInt{
 
 fn generate_possible_prime(sec_rng: &mut OsRng, bits: usize, certainty: u32) -> BigInt {
     let mut pp;
+
+    'outer:
     loop {
         pp = BigInt::from_biguint(Sign::Plus, sec_rng.gen_biguint(bits));
         if pp.is_even() {
             continue;
         }
+
+        let primes = [ 2, 3, 5, 7, 11, 13, 17, 19, 23 ];
+        for prime in primes.iter() {
+            let big_prime = BigInt::from_u64(*prime).unwrap();
+            if &pp % big_prime == BigInt::zero() {
+                continue 'outer;
+            }
+        }
+
         if miller_rabin(&pp, certainty) {
             break;
         }
@@ -108,12 +119,12 @@ fn miller_rabin(n: &BigInt, k: u32) -> bool{
 
     let n_minus_one = n - BigInt::one();
 
-    let mut r = 0;
-    let mut s = (*n).clone() - BigInt::one();
+    let mut s = 0;
+    let mut r = n_minus_one.clone();
 
-    while &s % &BigInt::two() == BigInt::zero() {
-       r += 1;
-       s = s / BigInt::two();
+    while &r % &BigInt::two() == BigInt::zero() {
+       s += 1;
+       r = r / BigInt::two();
     }
 
     let mut rng = match StdRng::new() {
@@ -121,28 +132,47 @@ fn miller_rabin(n: &BigInt, k: u32) -> bool{
         Err(e) => panic!("Failed to obtain OS RNG: {}", e)
     };
 
-   'outer:
+   let mut a = BigInt::two();
    for _ in 0..k {
-       let a = rng.gen_bigint_range(&BigInt::two(), &n_minus_one);
-       let mut x = a.mod_pow(&s, &n);
+       let mut x = a.mod_pow(&r, &n);
 
        if x == BigInt::one() || x == n_minus_one {
             continue;
         }
-        // }
 
-       for _ in 0..(r - 1) {
-           x = x.mod_pow(&BigInt::two(), &n);
-
+       for _ in 1..(s - 1) {
+           x = &x * &x % n;
            if x == BigInt::one(){
                return false;
-           } else if x == n_minus_one{
-               continue 'outer
-            }
+           }
+        }
+        if x != n_minus_one{
+            return false;
         }
 
-        return false;
+        a = rng.gen_bigint_range(&BigInt::two(), &n_minus_one);
     }
 
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::generate_possible_prime;
+    use rand::OsRng;
+
+    use test::Bencher;
+
+    #[bench]
+    fn bench_generate_possible_prime(b: &mut Bencher) {
+        let mut rng = match OsRng::new() {
+            Ok(g) => g,
+            Err(e) => panic!("Failed to obtain OS RNG: {}", e)
+        };
+
+        b.iter(|| {
+            generate_possible_prime(&mut rng, 64, 10);
+        });
+    }
+
 }
