@@ -53,7 +53,6 @@ impl KeyPairBuilder {
         let mut helper;
 
         loop {
-        // while {
             g = BigInt::from_biguint(Sign::Plus, sec_rng.gen_biguint(self.bits));
             helper = calculate_l(&g.mod_pow(&lambda, &n_squared), &n);
 
