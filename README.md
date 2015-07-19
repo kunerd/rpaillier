@@ -1,4 +1,7 @@
 # rPaillier
+
+[![Build Status](https://travis-ci.org/kunerd/rpaillier.svg?branch=master)](https://travis-ci.org/kunerd/rpaillier)
+
 A Rust implementation of the Paillier cryptosystem
 
 usage
