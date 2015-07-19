@@ -1,12 +1,7 @@
 use ramp::{ Int, RandomInt};
-
 use rand::{ OsRng, StdRng };
 
-mod key_pair;
-pub use self::key_pair::KeyPair;
-
-use public_key::PublicKey;
-use private_key::PrivateKey;
+use super::{ KeyPair, PublicKey, PrivateKey };
 
 use bigint_extensions::{ ModPow, ModInverse };
 

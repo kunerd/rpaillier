@@ -3,7 +3,7 @@ extern crate rpaillier;
 
 use ramp::int::{ Int };
 
-use rpaillier::{ KeyPair, PublicKey, KeyPairBuilder };
+use rpaillier::KeyPairBuilder;
 
 #[test]
 fn test_encrypt_decrypt() {
