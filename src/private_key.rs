@@ -1,6 +1,6 @@
-use num::bigint::BigInt;
+use ramp::Int;
 
 pub struct PrivateKey {
-    pub lambda: BigInt,
-    pub denominator: BigInt
+    pub lambda: Int,
+    pub denominator: Int
 }

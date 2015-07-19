@@ -1,37 +1,22 @@
-extern crate num;
+extern crate ramp;
 extern crate rpaillier;
 
-use num::bigint::{ BigInt, Sign };
-use num::traits::FromPrimitive;
-use rpaillier::bigint_extensions::{ Two, Three, ModInverse, ModPow};
+use ramp::int::{ Int };
+use rpaillier::bigint_extensions::{ ModPow, ModInverse };
 
 use rpaillier::{ KeyPair, PublicKey, KeyPairBuilder };
 
 #[test]
-fn test_bigint_two() {
-    let a = BigInt::two();
-    let e = BigInt::from_u8(2).unwrap();
-    assert_eq!(e, a);
-}
-
-#[test]
-fn test_bigint_three() {
-    let a = BigInt::three();
-    let e = BigInt::from_u8(3).unwrap();
-    assert_eq!(e, a);
-}
-
-#[test]
 fn test_bigint_mod_pow() {
-    fn check(b: &BigInt, e: &BigInt, m: &BigInt, r: &BigInt) {
+    fn check(b: &Int, e: &Int, m: &Int, r: &Int) {
         assert_eq!(b.mod_pow(&e, &m), *r);
     }
 
     fn check_i64(b: i64, e: i64, m: i64, r: i64) {
-        let big_b = BigInt::from_i64(b).unwrap();
-        let big_e = BigInt::from_i64(e).unwrap();
-        let big_m = BigInt::from_i64(m).unwrap();
-        let big_r = BigInt::from_i64(r).unwrap();
+        let big_b = Int::from(b);
+        let big_e = Int::from(e);
+        let big_m = Int::from(m);
+        let big_r = Int::from(r);
 
         check(&big_b, &big_e, &big_m, &big_r);
     }
@@ -46,28 +31,21 @@ fn test_bigint_mod_pow() {
     check_i64(2, 5, 33, 32);
     check_i64(2, 5, 32, 0);
     check_i64(std::i64::MAX, std::i64::MAX, 2, 1);
-
-    let big_b = BigInt::new(Sign::Plus, vec![12,234,234,556,34]);
-    let big_e = BigInt::new(Sign::Plus, vec![12,234,234,556,34]);
-    let big_m = BigInt::new(Sign::Plus, vec![234,556,34]);
-    let big_r = BigInt::new(Sign::Plus, vec![2689017340, 2002504038, 5]);
-
-    check(&big_b, &big_e, &big_m, &big_r);
 }
 
 #[test]
 fn test_bigint_mod_inverse() {
     fn check(a: i64, b: i64, c: i64) {
-        let big_a = BigInt::from_i64(a).unwrap();
-        let big_b = BigInt::from_i64(b).unwrap();
-        let big_c = BigInt::from_i64(c).unwrap();
+        let big_a = Int::from(a);
+        let big_b = Int::from(b);
+        let big_c = Int::from(c);
 
         assert_eq!(big_a.mod_inverse(&big_b).unwrap(), big_c);
     }
 
     fn check_none(a: i64, b: i64) {
-        let big_a = BigInt::from_i64(a).unwrap();
-        let big_b = BigInt::from_i64(b).unwrap();
+        let big_a = Int::from(a);
+        let big_b = Int::from(b);
 
         assert_eq!(big_a.mod_inverse(&big_b), None);
 
@@ -80,7 +58,6 @@ fn test_bigint_mod_inverse() {
     check_none(0, 21);
     check_none(0, 198);
     check_none(7, 21);
-
 }
 
 #[test]
@@ -89,7 +66,7 @@ fn test_encrypt_decrypt() {
 
     let public_key = &key_pair.public_key;
 
-    let m = BigInt::from_u8(37).unwrap();
+    let m = Int::from(37);
 
     let c = public_key.encrypt(&m);
     let a = key_pair.decrypt(&c);
@@ -103,8 +80,8 @@ fn test_homomorphic_properties() {
 
     let pk = &kp.public_key;
 
-    let m1 = BigInt::from_u8(37).unwrap();
-    let m2 = BigInt::from_u8(37).unwrap();
+    let m1 = Int::from(37);
+    let m2 = Int::from(132);
 
     let c1 = pk.encrypt(&m1);
     let c2 = pk.encrypt(&m2);

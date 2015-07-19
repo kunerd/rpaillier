@@ -5,4 +5,9 @@ authors = ["Hendrik Kunert <qkunerd@gmail.com>"]
 
 [dependencies]
 rand = "0.3"
-num = "0.1"
+# num = "0.1"
+# ramp = "0.1.6"
+
+[dependencies.ramp]
+git = "https://github.com/kunerd/ramp.git"
+branch = "branch-for-rpaillier"

@@ -1,10 +1,9 @@
 #![feature(core)]
-
 #![feature(test)]
 extern crate test;
 
-extern crate num;
 extern crate core;
+extern crate ramp;
 extern crate rand;
 
 pub mod bigint_extensions;

@@ -1,6 +1,5 @@
-use num::bigint::BigInt;
+use ramp::Int;
 use bigint_extensions::ModPow;
-use num::traits::One;
 
 use public_key::PublicKey;
 use private_key::PrivateKey;
@@ -11,7 +10,7 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-    pub fn decrypt(&self, c: &BigInt) -> BigInt {
+    pub fn decrypt(&self, c: &Int) -> Int {
 
         let n = &self.public_key.n;
         let n_square = &self.public_key.n_squared;
@@ -19,6 +18,6 @@ impl KeyPair {
         let lambda = &self.private_key.lambda;
         let u = &self.private_key.denominator;
 
-        ((c.mod_pow(&lambda, &n_square) - BigInt::one()) / n * u) % n
+        ((c.mod_pow(&lambda, &n_square) - Int::one()) / n * u) % n
     }
 }

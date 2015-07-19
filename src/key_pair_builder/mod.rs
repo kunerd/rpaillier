@@ -1,6 +1,5 @@
-use num::bigint::{ BigInt, RandBigInt, Sign };
-use num::traits::{ Zero, One, FromPrimitive };
-use num::integer::Integer;
+use ramp::{ Int, RandomInt};
+
 use rand::{ OsRng, StdRng };
 
 mod key_pair;
@@ -9,7 +8,7 @@ pub use self::key_pair::KeyPair;
 use public_key::PublicKey;
 use private_key::PrivateKey;
 
-use bigint_extensions::{ Two, Three, ModPow, ModInverse };
+use bigint_extensions::{ ModPow, ModInverse };
 
 pub struct KeyPairBuilder {
     bits: usize,
@@ -44,20 +43,20 @@ impl KeyPairBuilder {
         let n = p * q;
         let n_squared = &n * &n;
 
-        let p_minus_one = p - BigInt::one();
-        let q_minus_one = q - BigInt::one();
+        let p_minus_one = p - Int::one();
+        let q_minus_one = q - Int::one();
 
-        let lambda = Integer::lcm(&p_minus_one, &q_minus_one);
+        let lambda = p_minus_one.lcm(&q_minus_one);
 
         let mut g;
         let mut helper;
 
         loop {
-            g = BigInt::from_biguint(Sign::Plus, sec_rng.gen_biguint(self.bits));
+            g = sec_rng.gen_uint(self.bits);
             helper = calculate_l(&g.mod_pow(&lambda, &n_squared), &n);
 
             let a = helper.gcd(&n);
-            if a == BigInt::one() {
+            if a == Int::one() {
                 break;
             }
         }
@@ -80,26 +79,26 @@ impl KeyPairBuilder {
 
 }
 
-fn calculate_l(u: &BigInt, n: &BigInt) -> BigInt{
-    let r = u - BigInt::one();
+fn calculate_l(u: &Int, n: &Int) -> Int{
+    let r = u - Int::one();
     r / n
 }
 
 
-fn generate_possible_prime(sec_rng: &mut OsRng, bits: usize, certainty: u32) -> BigInt {
+fn generate_possible_prime(sec_rng: &mut OsRng, bits: usize, certainty: u32) -> Int {
     let mut pp;
 
     'outer:
     loop {
-        pp = BigInt::from_biguint(Sign::Plus, sec_rng.gen_biguint(bits));
-        if pp.is_even() {
+        pp = sec_rng.gen_uint(bits);
+        if (&pp % &Int::from(2)) == Int::zero() {
             continue;
         }
 
         let primes = [ 2, 3, 5, 7, 11, 13, 17, 19, 23 ];
         for prime in primes.iter() {
-            let big_prime = BigInt::from_u64(*prime).unwrap();
-            if &pp % big_prime == BigInt::zero() {
+            let big_prime = Int::from(*prime);
+            if &pp % big_prime == Int::zero() {
                 continue 'outer;
             }
         }
@@ -111,19 +110,20 @@ fn generate_possible_prime(sec_rng: &mut OsRng, bits: usize, certainty: u32) -> 
     return pp;
 }
 
-fn miller_rabin(n: &BigInt, k: u32) -> bool{
-    if n <= &BigInt::three() {
+fn miller_rabin(n: &Int, k: u32) -> bool{
+    if n <= &Int::from(3) {
         return true;
     }
 
-    let n_minus_one = n - BigInt::one();
+    let n_minus_one = n - Int::one();
 
     let mut s = 0;
     let mut r = n_minus_one.clone();
 
-    while &r % &BigInt::two() == BigInt::zero() {
+    let two = Int::from(2);
+    while &r % &two == Int::zero() {
        s += 1;
-       r = r / BigInt::two();
+       r = r / &two;
     }
 
     let mut rng = match StdRng::new() {
@@ -131,17 +131,17 @@ fn miller_rabin(n: &BigInt, k: u32) -> bool{
         Err(e) => panic!("Failed to obtain OS RNG: {}", e)
     };
 
-   let mut a = BigInt::two();
+   let mut a = Int::from(2);
    for _ in 0..k {
        let mut x = a.mod_pow(&r, &n);
 
-       if x == BigInt::one() || x == n_minus_one {
+       if x == Int::one() || x == n_minus_one {
             continue;
         }
 
        for _ in 1..(s - 1) {
            x = &x * &x % n;
-           if x == BigInt::one(){
+           if x == Int::one(){
                return false;
            }
         }
@@ -149,7 +149,7 @@ fn miller_rabin(n: &BigInt, k: u32) -> bool{
             return false;
         }
 
-        a = rng.gen_bigint_range(&BigInt::two(), &n_minus_one);
+        a = rng.gen_uint_range(&Int::from(2), &n_minus_one);
     }
 
     true

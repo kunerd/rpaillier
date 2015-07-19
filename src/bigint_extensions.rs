@@ -1,45 +1,25 @@
-use core::ops::Mul;
+use ramp::int::Int;
+use core::convert::From;
 
-use num::traits::{ Zero, One, FromPrimitive, ToPrimitive };
-use num::bigint::{ BigInt, Sign };
+const DEFAULT_BUCKET_SIZE: usize = 5;
 
-pub trait Two: Mul<Self, Output=Self> {
-    fn two() -> Self;
+pub trait ModPow<T, K> {
+    fn mod_pow(&self, exp: &T, m: &K) -> Self;
+    fn mod_pow_k(&self, exp: &T, m: &K, k: usize) -> Self;
 }
 
-impl Two for BigInt {
-    #[inline]
-    fn two() -> BigInt {
-        BigInt::new(Sign::Plus, vec!(2))
+impl ModPow<Int, Int> for Int {
+
+    fn mod_pow(&self, exp: &Int, m: &Int) -> Int {
+        self.mod_pow_k(exp, m, DEFAULT_BUCKET_SIZE)
     }
-}
 
-pub trait Three: Mul<Self, Output=Self> {
-    fn three() -> Self;
-}
+    fn mod_pow_k(&self, exp: &Int, m: &Int, k: usize) -> Int {
 
-impl Three for BigInt {
-    #[inline]
-    fn three() -> BigInt {
-        BigInt::new(Sign::Plus, vec!(3))
-    }
-}
-
-pub trait ModPow<T> {
-    fn mod_pow(&self, exp: &T, m: &T) -> T;
-}
-
-const TABLE_BASE: usize = 5;
-
-impl ModPow<BigInt> for BigInt {
-
-    // Left-to-right k-ary exponentiation
-    fn mod_pow(&self, exp: &BigInt, m: &BigInt) -> BigInt {
-
-        let base = 2 << (TABLE_BASE - 1);
+        let base = 2 << (k - 1);
 
         let mut table = Vec::with_capacity(base);
-        table.push(BigInt::one());
+        table.push(Int::one());
 
         for i in 1..base {
             let last = table.get_mut(i-1).unwrap().clone();
@@ -47,10 +27,10 @@ impl ModPow<BigInt> for BigInt {
             table.push((last * self) % m);
         }
 
-        let mut r = BigInt::one();
+        let mut r = Int::one();
 
         for i in digits_of_n(exp, base).iter().rev() {
-            for _ in 0..TABLE_BASE {
+            for _ in 0..k {
                 r = &r * &r % m
             }
 
@@ -63,35 +43,36 @@ impl ModPow<BigInt> for BigInt {
     }
 }
 
-fn digits_of_n(e: &BigInt, b: usize) -> Vec<usize> {
+fn digits_of_n(e: &Int, b: usize) -> Vec<usize> {
     let mut digits = Vec::new();
 
     let mut n = (*e).clone();
-    let base = BigInt::from_usize(b).unwrap();
+    let base = Int::from(b);
 
-    while n > BigInt::zero() {
-        digits.push((&n % &base).to_usize().unwrap());
+    while n > Int::zero() {
+        digits.push(usize::from(&(&n % &base)));
         n = &n / &base;
     }
 
     digits
 }
 
+
 pub trait ModInverse<T> {
-    fn mod_inverse(&self, n: &T) -> Option<T>;
+    fn mod_inverse(&self, n: &T) -> Option<Self>;
 }
 
-impl ModInverse<BigInt> for BigInt {
+impl ModInverse<Int> for Int {
 
-    fn mod_inverse(&self, n: &BigInt) -> Option<BigInt> {
-        let mut u1 = BigInt::one();
+    fn mod_inverse(&self, n: &Int) -> Option<Int> {
+        let mut u1 = Int::one();
         let mut u3 = (*self).clone();
-        let mut v1 = BigInt::zero();
+        let mut v1 = Int::zero();
         let mut v3 = (*n).clone();
 
         let mut iter = true;
 
-        while v3 != BigInt::zero()
+        while v3 != Int::zero()
         {
             let q = &u3 / &v3;
             let t3 = u3 % &v3;
@@ -105,7 +86,7 @@ impl ModInverse<BigInt> for BigInt {
             iter = !iter;
         }
 
-        if u3 != BigInt::one() {
+        if u3 != Int::one() {
             return None;
         }
 
@@ -122,39 +103,33 @@ impl ModInverse<BigInt> for BigInt {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num::bigint::{ BigInt, Sign, RandBigInt };
-    use rand::StdRng;
+    use ramp::{ Int, RandomInt };
+    use rand;
 
     use test::Bencher;
 
     #[bench]
     fn bench_mod_pow(b: &mut Bencher) {
-        let mut rng = match StdRng::new() {
-            Ok(g) => g,
-            Err(e) => panic!("Failed to obtain OS RNG: {}", e)
-        };
+        let mut rng = rand::thread_rng();
 
-        let base = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
-        let m = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
+        let base = rng.gen_uint(265);
+        let m = rng.gen_uint(265);
 
         b.iter(|| {
-            let exp = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(265));
+            let exp = rng.gen_uint(265);
+
             base.mod_pow(&exp, &m);
         });
     }
 
-
     #[bench]
     fn bench_mod_inverse(b: &mut Bencher) {
-        let mut rng = match StdRng::new() {
-            Ok(g) => g,
-            Err(e) => panic!("Failed to obtain OS RNG: {}", e)
-        };
-
-        let m = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(256));
+        let mut rng = rand::thread_rng();
+        let m = rng.gen_uint(128);
 
         b.iter(|| {
-            let a = BigInt::from_biguint(Sign::Plus, rng.gen_biguint(256));
+            let a = rng.gen_uint(128);
+
             a.mod_inverse(&m);
         });
     }
