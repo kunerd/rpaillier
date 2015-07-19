@@ -6,7 +6,7 @@ extern crate core;
 extern crate ramp;
 extern crate rand;
 
-pub mod bigint_extensions;
+mod bigint_extensions;
 
 mod public_key;
 mod private_key;
