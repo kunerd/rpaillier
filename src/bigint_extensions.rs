@@ -58,7 +58,7 @@ fn digits_of_n(e: &Int, b: usize) -> Vec<usize> {
 }
 
 
-pub trait ModInverse<T> {
+pub trait ModInverse<T> : Sized {
     fn mod_inverse(&self, n: &T) -> Option<Self>;
 }
 
