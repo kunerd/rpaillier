@@ -144,7 +144,7 @@ fn miller_rabin(n: &Int, k: u32) -> bool{
             return false;
         }
 
-        a = rng.gen_uint_range(&Int::from(2), &n_minus_one);
+        a = rng.gen_int_range(&Int::from(2), &n_minus_one);
     }
 
     true

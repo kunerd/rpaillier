@@ -37,7 +37,7 @@ impl PublicKey {
             Err(e) => panic!("Failed to obtain StdRng RNG: {}", e)
         };
 
-        let r = rng.gen_uint_range(&self.n, &self.n_squared);
+        let r = rng.gen_int_range(&self.n, &self.n_squared);
 
         let mut result = self.g.mod_pow(m, &self.n_squared);
         let x = r.mod_pow(&self.n, &self.n_squared);

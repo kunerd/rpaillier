@@ -4,10 +4,5 @@ version = "0.1.0"
 authors = ["Hendrik Kunert <qkunerd@gmail.com>"]
 
 [dependencies]
-rand = "0.3"
-# num = "0.1"
-# ramp = "0.1.6"
-
-[dependencies.ramp]
-git = "https://github.com/kunerd/ramp.git"
-branch = "branch-for-rpaillier"
+rand = "0.3.11"
+ramp = "0.2.2"
